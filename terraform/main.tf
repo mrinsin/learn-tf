@@ -4,7 +4,7 @@ resource "aws_s3_bucket" "my_website_bucket" {
 
   website {
     index_document = "index.html"
-    error_document = "index.html"
+    error_document = "error.html"
 
     routing_rules = <<EOF
 [{
@@ -37,4 +37,18 @@ resource "aws_s3_bucket_policy" "my_website_bucket_policy" {
   ]
 }
 POLICY
+}
+
+resource "null_resource" "remove_and_upload_to_s3" {
+  provisioner "local-exec" {
+    command = "aws s3 sync ../src s3://${aws_s3_bucket.my_website_bucket.id}"
+  }
+
+  triggers = {
+    always_run = "${timestamp()}"
+  }
+}
+
+output "my_website_endpoint" {
+  value = "${aws_s3_bucket.my_website_bucket.website_endpoint}"
 }
